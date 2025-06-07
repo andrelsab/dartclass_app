@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'pages/home_page.dart';
 import 'pages/config_page.dart';
@@ -8,6 +9,10 @@ import 'pages/splash_page.dart';
 void main() async {
   // Garante que os bindings do Flutter estejam prontos
   WidgetsFlutterBinding.ensureInitialized();
+
+
+  // Inicializa os dados de formatação de data para pt_BR
+  await initializeDateFormatting('pt_BR', null);
 
   // Inicializa o Supabase
   await Supabase.initialize(

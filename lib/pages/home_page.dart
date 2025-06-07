@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/ensalamento_repository.dart';
 import '../models/ensalamento.dart';
+import 'ensalamento_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,6 +13,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int currentIndex = 0;
+
   late EnsalamentoRepository repository;
   List<Ensalamento> todosEnsalamentos = [];
   List<Ensalamento> ensalamentosFiltrados = [];
@@ -80,130 +83,149 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      _buildEnsalamentoPage(),
+      const EnsalamentoPage(), // ← Adicione sua página aqui
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFEFF3F8),
       appBar: AppBar(
         title: const Text(
-          'Bem-Vindo De Volta!',
+          'DartClass',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white, // texto branco
+            color: Colors.white,
           ),
         ),
-
         backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
               Navigator.pushReplacementNamed(context, '/config');
             },
           ),
         ],
       ),
-      body:
-          carregando
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 40,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: diasSemana.length,
-                      itemBuilder: (context, index) {
-                        final isSelected = index == diaSelecionadoIndex;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: ChoiceChip(
-                            label: Text(
-                              diasSemana[index],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : Colors.blue,
-                              ),
-                            ),
-                            selected: isSelected,
-                            onSelected: (_) {
-                              setState(() {
-                                diaSelecionadoIndex = index;
-                                aplicarFiltroDia();
-                              });
-                            },
-                            selectedColor: Colors.blueAccent,
-                            backgroundColor: Colors.white,
-                            elevation: isSelected ? 4 : 1,
-                            showCheckmark: false, // remove o ícone de check
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Aulas de ${diasSemana[diaSelecionadoIndex]}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child:
-                        ensalamentosFiltrados.isEmpty
-                            ? Center(
-                              child: Text(
-                                mensagem ?? 'Nenhuma aula para este dia.',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            )
-                            : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              itemCount: ensalamentosFiltrados.length,
-                              itemBuilder: (context, index) {
-                                final e = ensalamentosFiltrados[index];
-                                final List<Widget> cards = [];
-
-                                if (e.primeiroCurso?.id == cursoId) {
-                                  cards.add(
-                                    EnsalamentoCard(
-                                      curso:
-                                          e.primeiroCurso?.nomeDoCurso ??
-                                          'Curso desconhecido',
-                                      semestre: e.primeiroCurso?.semestre ?? 0,
-                                      sala: e.sala?.nome ?? 'N/A',
-                                      horario: '1º Horário',
-                                    ),
-                                  );
-                                }
-
-                                if (e.segundoCurso?.id == cursoId) {
-                                  cards.add(
-                                    EnsalamentoCard(
-                                      curso:
-                                          e.segundoCurso?.nomeDoCurso ??
-                                          'Curso desconhecido',
-                                      semestre: e.segundoCurso?.semestre ?? 0,
-                                      sala: e.sala?.nome ?? 'N/A',
-                                      horario: '2º Horário',
-                                    ),
-                                  );
-                                }
-
-                                return Column(children: cards);
-                              },
-                            ),
-                  ),
-                ],
-              ),
+      body: pages[currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) => setState(() => currentIndex = index),
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 12,
+        iconSize: 30,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'Ensalamento',
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildEnsalamentoPage() {
+    return carregando
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: diasSemana.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = index == diaSelecionadoIndex;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: ChoiceChip(
+                        label: Text(
+                          diasSemana[index],
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : Colors.blue,
+                          ),
+                        ),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setState(() {
+                            diaSelecionadoIndex = index;
+                            aplicarFiltroDia();
+                          });
+                        },
+                        selectedColor: Colors.blueAccent,
+                        backgroundColor: Colors.white,
+                        elevation: isSelected ? 4 : 1,
+                        showCheckmark: false,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Aulas de ${diasSemana[diaSelecionadoIndex]}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ensalamentosFiltrados.isEmpty
+                    ? Center(
+                        child: Text(
+                          mensagem ?? 'Nenhuma aula para este dia.',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: ensalamentosFiltrados.length,
+                        itemBuilder: (context, index) {
+                          final e = ensalamentosFiltrados[index];
+                          final List<Widget> cards = [];
+
+                          if (e.primeiroCurso?.id == cursoId) {
+                            cards.add(
+                              EnsalamentoCard(
+                                curso: e.primeiroCurso?.nomeDoCurso ?? 'Curso desconhecido',
+                                semestre: e.primeiroCurso?.semestre ?? 0,
+                                sala: e.sala?.nome ?? 'N/A',
+                                horario: '1º Horário',
+                              ),
+                            );
+                          }
+
+                          if (e.segundoCurso?.id == cursoId) {
+                            cards.add(
+                              EnsalamentoCard(
+                                curso: e.segundoCurso?.nomeDoCurso ?? 'Curso desconhecido',
+                                semestre: e.segundoCurso?.semestre ?? 0,
+                                sala: e.sala?.nome ?? 'N/A',
+                                horario: '2º Horário',
+                              ),
+                            );
+                          }
+
+                          return Column(children: cards);
+                        },
+                      ),
+              ),
+            ],
+          );
   }
 }
 
