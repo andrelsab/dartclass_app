@@ -42,7 +42,7 @@ class _SplashPageState extends State<SplashPage> {
             Icon(Icons.school, color: Colors.white, size: 80),
             SizedBox(height: 16),
             Text(
-              'Ensalamento',
+              'DartClass',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 26,

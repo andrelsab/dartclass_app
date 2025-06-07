@@ -12,7 +12,9 @@ class EnsalamentoPage extends StatefulWidget {
 }
 
 class _EnsalamentoPageState extends State<EnsalamentoPage> {
-  final EnsalamentoRepository _repository = EnsalamentoRepository(Supabase.instance.client);
+  final EnsalamentoRepository _repository = EnsalamentoRepository(
+    Supabase.instance.client,
+  );
 
   List<Ensalamento> ensalamentos = [];
   List<String> blocos = [];
@@ -20,12 +22,19 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
   String diaSelecionado = '';
   bool carregando = true;
 
-  final List<String> diasDaSemana = ['segunda', 'terça', 'quarta', 'quinta', 'sexta'];
+  final List<String> diasDaSemana = [
+    'segunda',
+    'terça',
+    'quarta',
+    'quinta',
+    'sexta',
+  ];
 
   @override
   void initState() {
     super.initState();
     diaSelecionado = _diaAtual();
+    inicializar();
     carregarDados();
   }
 
@@ -51,11 +60,35 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
     return DateFormat('EEEE, d \'de\' MMMM', 'pt_BR').format(DateTime.now());
   }
 
+Future<void> inicializar() async {
+  setState(() => carregando = true);
+
+  blocos = await _repository.listarBlocos();
+
+  // Define o bloco C como padrão, se existir
+  if (blocos.contains('C')) {
+    blocoSelecionado = 'C';
+  } else if (blocos.isNotEmpty) {
+    blocoSelecionado = blocos.first;
+  }
+
+  ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(
+    diaSelecionado,
+    blocoSelecionado,
+  );
+
+  setState(() => carregando = false);
+}
+
+
   Future<void> carregarDados() async {
     setState(() => carregando = true);
 
     blocos = await _repository.listarBlocos();
-    ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(diaSelecionado, blocoSelecionado);
+    ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(
+      diaSelecionado,
+      blocoSelecionado,
+    );
 
     setState(() => carregando = false);
   }
@@ -67,7 +100,10 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
       carregando = true;
     });
 
-    ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(diaSelecionado, blocoSelecionado);
+    ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(
+      diaSelecionado,
+      blocoSelecionado,
+    );
 
     setState(() => carregando = false);
   }
@@ -76,99 +112,130 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEFF3F8),
-      body: carregando
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    _dataFormatada(),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButton<String>(
-                          value: diaSelecionado,
-                          isExpanded: true,
-                          items: diasDaSemana.map((dia) {
-                            return DropdownMenuItem(
-                              value: dia,
-                              child: Text(dia[0].toUpperCase() + dia.substring(1)),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) aplicarFiltro(novoDia: value);
-                          },
-                        ),
+      body:
+          carregando
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _dataFormatada(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: DropdownButton<String>(
-                          hint: const Text('Bloco'),
-                          value: blocoSelecionado,
-                          isExpanded: true,
-                          items: blocos.map((bloco) {
-                            return DropdownMenuItem<String>(
-                              value: bloco,
-                              child: Text(bloco),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            aplicarFiltro(novoBloco: value);
-                          },
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: ensalamentos.isEmpty
-                      ? const Center(child: Text('Nenhum ensalamento encontrado.'))
-                      : ListView.builder(
-                          itemCount: ensalamentos.length,
-                          padding: const EdgeInsets.all(16),
-                          itemBuilder: (context, index) {
-                            final e = ensalamentos[index];
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButton<String>(
+                            value: diaSelecionado,
+                            isExpanded: true,
+                            items:
+                                diasDaSemana.map((dia) {
+                                  return DropdownMenuItem(
+                                    value: dia,
+                                    child: Text(
+                                      dia[0].toUpperCase() + dia.substring(1),
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              if (value != null) aplicarFiltro(novoDia: value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: DropdownButton<String>(
+                            hint: const Text('Bloco'),
+                            value: blocoSelecionado,
+                            isExpanded: true,
+                            items:
+                                blocos.map((bloco) {
+                                  return DropdownMenuItem<String>(
+                                    value: bloco,
+                                    child: Text(bloco),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              aplicarFiltro(novoBloco: value);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child:
+                        ensalamentos.isEmpty
+                            ? const Center(
+                              child: Text('Nenhum ensalamento encontrado.'),
+                            )
+                            : ListView.builder(
+                              itemCount: ensalamentos.length,
+                              padding: const EdgeInsets.all(16),
+                              itemBuilder: (context, index) {
+                                final e = ensalamentos[index];
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Dia: ${e.diaDaSemana}',
-                                        style: const TextStyle(
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Sala ${e.sala?.nome ?? 'N/A'} - ${e.sala?.bloco ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    const SizedBox(height: 8),
-                                    Text('Sala: ${e.sala?.nome ?? 'N/A'}'),
-                                    Text('Bloco: ${e.sala?.bloco ?? 'N/A'}'),
-                                    const Divider(),
-                                    if (e.primeiroCurso != null)
-                                      Text(
-                                          '1º Horário: ${e.primeiroCurso!.nomeDoCurso} - ${e.primeiroCurso!.semestre}º semestre'),
-                                    if (e.segundoCurso != null)
-                                      Text(
-                                          '2º Horário: ${e.segundoCurso!.nomeDoCurso} - ${e.segundoCurso!.semestre}º semestre'),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                )
-              ],
-            ),
+                                            color: Color(0xFF0077C2),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        if (e.primeiroCurso != null)
+                                          Text(
+                                            '1º Horário: ${e.primeiroCurso!.nomeDoCurso} - ${e.primeiroCurso!.semestre}º semestre',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        if (e.segundoCurso != null)
+                                          Text(
+                                            '2º Horário: ${e.segundoCurso!.nomeDoCurso} - ${e.segundoCurso!.semestre}º semestre',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                  ),
+                ],
+              ),
     );
   }
 }

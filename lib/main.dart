@@ -10,7 +10,6 @@ void main() async {
   // Garante que os bindings do Flutter estejam prontos
   WidgetsFlutterBinding.ensureInitialized();
 
-
   // Inicializa os dados de formatação de data para pt_BR
   await initializeDateFormatting('pt_BR', null);
 
@@ -33,8 +32,9 @@ class EnsalamentoApp extends StatelessWidget {
       title: 'Ensalamento',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        primaryColor: const Color(0xFF0077C2),
+        scaffoldBackgroundColor: const Color(0xFFEFF3F8),
+        fontFamily: 'Roboto',
       ),
       initialRoute: '/',
       routes: {
