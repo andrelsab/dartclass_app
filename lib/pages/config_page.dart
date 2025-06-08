@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../models/turma.dart';
 
 class ConfigPage extends StatefulWidget {
@@ -13,8 +12,16 @@ class ConfigPage extends StatefulWidget {
 
 class _ConfigPageState extends State<ConfigPage> {
   final SupabaseClient supabase = Supabase.instance.client;
+
   List<Turma> turmas = [];
-  Turma? turmaSelecionada;
+  List<String> cursos = [];
+  List<int> semestres = [];
+  List<String> turnos = [];
+
+  String? cursoSelecionado;
+  int? semestreSelecionado;
+  String? turnoSelecionado;
+
   bool carregando = true;
   String? erro;
 
@@ -43,7 +50,6 @@ class _ConfigPageState extends State<ConfigPage> {
       }
 
       final data = response.data;
-
       if (data == null || data is! List) {
         setState(() {
           erro = 'Dados de turmas inválidos.';
@@ -52,9 +58,16 @@ class _ConfigPageState extends State<ConfigPage> {
         return;
       }
 
+      turmas =
+          data.map((e) => Turma.fromMap(e as Map<String, dynamic>)).toList();
+      cursos =
+          turmas.map((t) => t.nomeDoCurso).whereType<String>().toSet().toList();
+      semestres =
+          turmas.map((t) => t.semestre).whereType<int>().toSet().toList()
+            ..sort();
+      turnos = turmas.map((t) => t.turno).whereType<String>().toSet().toList();
+
       setState(() {
-        turmas =
-            data.map((e) => Turma.fromMap(e as Map<String, dynamic>)).toList();
         carregando = false;
       });
     } catch (e) {
@@ -66,18 +79,31 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   Future<void> _salvarConfiguracao() async {
-    if (turmaSelecionada == null || turmaSelecionada!.semestre == null) {
+    final turmaSelecionada = turmas.firstWhere(
+      (t) =>
+          t.nomeDoCurso == cursoSelecionado &&
+          t.semestre == semestreSelecionado &&
+          t.turno == turnoSelecionado,
+      orElse: () => Turma(id: '', nomeDoCurso: null),
+    );
+
+    if (turmaSelecionada.id.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione um curso e semestre válidos.')),
+        const SnackBar(content: Text('Selecione uma combinação válida.')),
       );
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('curso_id', turmaSelecionada!.id);
-    await prefs.setInt('semestre', turmaSelecionada!.semestre!);
+    await prefs.setString('curso_id', turmaSelecionada.id);
+    await prefs.setInt('semestre', turmaSelecionada.semestre!);
 
-    Navigator.pushReplacementNamed(context, '/home');
+    // Verifica se pode voltar ou substitui pela Home
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
   }
 
   @override
@@ -85,14 +111,21 @@ class _ConfigPageState extends State<ConfigPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFEFF3F8),
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         title: const Text(
           'Configurar Turma',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // texto branco
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -108,26 +141,73 @@ class _ConfigPageState extends State<ConfigPage> {
                   ),
                 )
                 : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    DropdownButtonFormField<Turma>(
+                    DropdownButtonFormField<String>(
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'Selecione o curso e semestre',
+                        labelText: 'Curso',
                         border: OutlineInputBorder(),
                       ),
+                      value: cursoSelecionado,
                       items:
-                          turmas.map((turma) {
-                            return DropdownMenuItem<Turma>(
-                              value: turma,
-                              child: Text(turma.toString()),
-                            );
-                          }).toList(),
+                          cursos
+                              .map(
+                                (curso) => DropdownMenuItem(
+                                  value: curso,
+                                  child: Text(curso),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (value) {
                         setState(() {
-                          turmaSelecionada = value;
+                          cursoSelecionado = value;
                         });
                       },
-                      value: turmaSelecionada,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Semestre',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: semestreSelecionado,
+                      items:
+                          semestres
+                              .map(
+                                (s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text('$sº semestre'),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          semestreSelecionado = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Turno',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: turnoSelecionado,
+                      items:
+                          turnos
+                              .map(
+                                (t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          turnoSelecionado = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
@@ -135,7 +215,16 @@ class _ConfigPageState extends State<ConfigPage> {
                       icon: const Icon(Icons.save),
                       label: const Text('Salvar e continuar'),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],

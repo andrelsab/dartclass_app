@@ -20,11 +20,12 @@ class _SplashPageState extends State<SplashPage> {
 
     final cursoId = prefs.getString('curso_id');
     final semestre = prefs.getInt('semestre');
+    final turno = prefs.getString('turno'); // novo campo
 
     // Aguarda 1 segundo só para dar um tempo de splash
     await Future.delayed(const Duration(seconds: 1));
 
-    if (cursoId != null && semestre != null) {
+    if (cursoId != null && semestre != null && turno != null) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       Navigator.pushReplacementNamed(context, '/config');
@@ -34,7 +35,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Colors.indigo,
+      backgroundColor: Colors.blueAccent,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

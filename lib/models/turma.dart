@@ -21,7 +21,8 @@ class Turma {
       nomeDoCurso: map['nomeDoCurso'] as String?,
       turno: map['turno'] as String?,
       semestre: map['semestre'] != null ? (map['semestre'] as num).toInt() : null,
-      qtdDeAlunos: map['qtdDeAlunos'] != null ? (map['qtdDeAlunos'] as num).toInt() : null,
+      qtdDeAlunos:
+          map['qtdDeAlunos'] != null ? (map['qtdDeAlunos'] as num).toInt() : null,
       observacoes: map['observacoes'] as String?,
     );
   }
@@ -39,6 +40,9 @@ class Turma {
 
   @override
   String toString() {
-    return '${nomeDoCurso ?? "Curso desconhecido"} - ${semestre != null ? semestre.toString() + "º semestre" : "Sem semestre"}';
+    final curso = nomeDoCurso ?? 'Curso desconhecido';
+    final sem = semestre != null ? '${semestre}º semestre' : 'Sem semestre';
+    final turnoStr = turno ?? 'Sem turno';
+    return '$curso - $sem ($turnoStr)';
   }
 }
