@@ -32,29 +32,33 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.blueAccent,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.school, color: Colors.white, size: 80),
-            SizedBox(height: 16),
-            Text(
-              'DartClass',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.blueAccent,
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/logo.png',
+            width: 120,
+            height: 120,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'DartClass',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 8),
-            CircularProgressIndicator(color: Colors.white),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          const CircularProgressIndicator(color: Colors.white),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
