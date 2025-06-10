@@ -13,32 +13,36 @@ class Ensalamento {
   Ensalamento({
     required this.id,
     required this.salaId,
-    this.sala,  // novo
+    this.sala, // novo
     required this.diaDaSemana,
     this.primeiroCurso,
     this.segundoCurso,
     this.createdAt,
   });
 
-factory Ensalamento.fromMap(Map<String, dynamic> map) {
-  return Ensalamento(
-    id: map['id']?.toString() ?? 'id_desconhecido',
-    salaId: map['sala_id']?.toString() ?? 'sala_id_desconhecido',
-    sala: map['sala'] != null
-        ? Sala.fromMap(map['sala'] as Map<String, dynamic>)
-        : null,
-    diaDaSemana: map['dia_da_semana']?.toString() ?? 'Dia não informado',
-    primeiroCurso: map['primeiroCurso'] != null
-        ? Turma.fromMap(map['primeiroCurso'] as Map<String, dynamic>)
-        : null,
-    segundoCurso: map['segundoCurso'] != null
-        ? Turma.fromMap(map['segundoCurso'] as Map<String, dynamic>)
-        : null,
-    createdAt: map['created_at'] != null
-        ? DateTime.tryParse(map['created_at'].toString())
-        : null,
-  );
-}
+  factory Ensalamento.fromMap(Map<String, dynamic> map) {
+    return Ensalamento(
+      id: map['id']?.toString() ?? 'id_desconhecido',
+      salaId: map['sala_id']?.toString() ?? 'sala_id_desconhecido',
+      sala:
+          map['sala'] != null
+              ? Sala.fromMap(map['sala'] as Map<String, dynamic>)
+              : null,
+      diaDaSemana: map['dia_da_semana']?.toString() ?? 'Dia não informado',
+      primeiroCurso:
+          map['primeiroCurso'] != null
+              ? Turma.fromMap(map['primeiroCurso'] as Map<String, dynamic>)
+              : null,
+      segundoCurso:
+          map['segundoCurso'] != null
+              ? Turma.fromMap(map['segundoCurso'] as Map<String, dynamic>)
+              : null,
+      createdAt:
+          map['created_at'] != null
+              ? DateTime.tryParse(map['created_at'].toString())
+              : null,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {

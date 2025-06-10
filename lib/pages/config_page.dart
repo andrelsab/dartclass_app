@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -88,6 +90,7 @@ class _ConfigPageState extends State<ConfigPage> {
     );
 
     if (turmaSelecionada.id.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione uma combinação válida.')),
       );
@@ -99,6 +102,7 @@ class _ConfigPageState extends State<ConfigPage> {
     await prefs.setInt('semestre', turmaSelecionada.semestre!);
 
     // Verifica se pode voltar ou substitui pela Home
+    if (!mounted) return;
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {

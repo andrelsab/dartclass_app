@@ -25,6 +25,7 @@ class _SplashPageState extends State<SplashPage> {
     // Aguarda 1 segundo só para dar um tempo de splash
     await Future.delayed(const Duration(seconds: 1));
 
+    if (!mounted) return;
     if (cursoId != null && semestre != null && turno != null) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
@@ -32,33 +33,29 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.blueAccent,
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'DartClass',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blueAccent,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', width: 120, height: 120),
+            const SizedBox(height: 16),
+            const Text(
+              'DartClass',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          const CircularProgressIndicator(color: Colors.white),
-        ],
+            const SizedBox(height: 8),
+            const CircularProgressIndicator(color: Colors.white),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

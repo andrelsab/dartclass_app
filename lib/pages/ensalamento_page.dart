@@ -60,26 +60,37 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
     return DateFormat('EEEE, d \'de\' MMMM', 'pt_BR').format(DateTime.now());
   }
 
-Future<void> inicializar() async {
-  setState(() => carregando = true);
+  Future<void> inicializar() async {
+    setState(() => carregando = true);
 
-  blocos = await _repository.listarBlocos();
+    blocos = await _repository.listarBlocos();
 
-  // Define o bloco C como padrão, se existir
-  if (blocos.contains('C')) {
-    blocoSelecionado = 'C';
-  } else if (blocos.isNotEmpty) {
-    blocoSelecionado = blocos.first;
+    // Define o bloco C como padrão, se existir
+    if (blocos.contains('C')) {
+      blocoSelecionado = 'C';
+    } else if (blocos.isNotEmpty) {
+      blocoSelecionado = blocos.first;
+    }
+
+    ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(
+      diaSelecionado,
+      blocoSelecionado,
+    );
+
+    // Ordena a lista pelo nome da sala (alfanumérico) e semestre do primeiro horário
+    ensalamentos.sort((a, b) {
+      final nomeA = a.sala?.nome.toLowerCase() ?? '';
+      final nomeB = b.sala?.nome.toLowerCase() ?? '';
+      final cmpNome = nomeA.compareTo(nomeB);
+      if (cmpNome != 0) return cmpNome;
+      // Se o nome da sala for igual, ordena pelo semestre do primeiro horário
+      final semA = a.primeiroCurso?.semestre ?? 0;
+      final semB = b.primeiroCurso?.semestre ?? 0;
+      return semA.compareTo(semB);
+    });
+
+    setState(() => carregando = false);
   }
-
-  ensalamentos = await _repository.buscarEnsalamentosPorDiaEBloco(
-    diaSelecionado,
-    blocoSelecionado,
-  );
-
-  setState(() => carregando = false);
-}
-
 
   Future<void> carregarDados() async {
     setState(() => carregando = true);
@@ -89,6 +100,17 @@ Future<void> inicializar() async {
       diaSelecionado,
       blocoSelecionado,
     );
+
+    // Ordena a lista pelo nome da sala (alfanumérico) e semestre do primeiro horário
+    ensalamentos.sort((a, b) {
+      final nomeA = a.sala?.nome.toLowerCase() ?? '';
+      final nomeB = b.sala?.nome.toLowerCase() ?? '';
+      final cmpNome = nomeA.compareTo(nomeB);
+      if (cmpNome != 0) return cmpNome;
+      final semA = a.primeiroCurso?.semestre ?? 0;
+      final semB = b.primeiroCurso?.semestre ?? 0;
+      return semA.compareTo(semB);
+    });
 
     setState(() => carregando = false);
   }
@@ -104,6 +126,17 @@ Future<void> inicializar() async {
       diaSelecionado,
       blocoSelecionado,
     );
+
+    // Ordena a lista pelo nome da sala (alfanumérico) e semestre do primeiro horário
+    ensalamentos.sort((a, b) {
+      final nomeA = a.sala?.nome.toLowerCase() ?? '';
+      final nomeB = b.sala?.nome.toLowerCase() ?? '';
+      final cmpNome = nomeA.compareTo(nomeB);
+      if (cmpNome != 0) return cmpNome;
+      final semA = a.primeiroCurso?.semestre ?? 0;
+      final semB = b.primeiroCurso?.semestre ?? 0;
+      return semA.compareTo(semB);
+    });
 
     setState(() => carregando = false);
   }
@@ -192,7 +225,9 @@ Future<void> inicializar() async {
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),

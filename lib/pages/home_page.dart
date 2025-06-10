@@ -78,6 +78,16 @@ class _HomePageState extends State<HomePage> {
                     e.diaDaSemana.toLowerCase() == diaSelecionado.toLowerCase(),
               )
               .toList();
+      // Ordena por nome da sala e semestre do primeiro horário
+      ensalamentosFiltrados.sort((a, b) {
+        final nomeA = a.sala?.nome.toLowerCase() ?? '';
+        final nomeB = b.sala?.nome.toLowerCase() ?? '';
+        final cmpNome = nomeA.compareTo(nomeB);
+        if (cmpNome != 0) return cmpNome;
+        final semA = a.primeiroCurso?.semestre ?? 0;
+        final semB = b.primeiroCurso?.semestre ?? 0;
+        return semA.compareTo(semB);
+      });
     });
   }
 
@@ -93,10 +103,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text(
           'DartClass',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         actions: [
@@ -118,10 +125,7 @@ class _HomePageState extends State<HomePage> {
         elevation: 12,
         iconSize: 30,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Início',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
             icon: Icon(Icons.school),
             label: 'Ensalamento',
@@ -132,101 +136,138 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildEnsalamentoPage() {
-    return carregando
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 40,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: diasSemana.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = index == diaSelecionadoIndex;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: ChoiceChip(
-                        label: Text(
-                          diasSemana[index],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.blue,
-                          ),
-                        ),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          setState(() {
-                            diaSelecionadoIndex = index;
-                            aplicarFiltroDia();
-                          });
-                        },
-                        selectedColor: Colors.blueAccent,
-                        backgroundColor: Colors.white,
-                        elevation: isSelected ? 4 : 1,
-                        showCheckmark: false,
-                      ),
-                    );
-                  },
-                ),
+    if (carregando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Cria uma lista temporária de todos os horários do usuário, com campo horarioNum
+    final List<_CardHorario> horarios = [];
+    for (final e in ensalamentosFiltrados) {
+      if (e.primeiroCurso?.id == cursoId) {
+        horarios.add(
+          _CardHorario(
+            curso: e.primeiroCurso?.nomeDoCurso ?? 'Curso desconhecido',
+            semestre: e.primeiroCurso?.semestre ?? 0,
+            sala: e.sala?.nome ?? 'N/A',
+            horario: '1º Horário',
+            horarioNum: 1,
+          ),
+        );
+      }
+      if (e.segundoCurso?.id == cursoId) {
+        horarios.add(
+          _CardHorario(
+            curso: e.segundoCurso?.nomeDoCurso ?? 'Curso desconhecido',
+            semestre: e.segundoCurso?.semestre ?? 0,
+            sala: e.sala?.nome ?? 'N/A',
+            horario: '2º Horário',
+            horarioNum: 2,
+          ),
+        );
+      }
+    }
+
+    // Ordena: nome da sala e horarioNum (1 antes de 2), semestre só se quiser separar turmas diferentes
+    horarios.sort((a, b) {
+      final cmpSala = a.sala.toLowerCase().compareTo(b.sala.toLowerCase());
+      if (cmpSala != 0) return cmpSala;
+      // Se quiser manter o semestre como critério secundário, descomente a linha abaixo:
+      // final cmpSem = a.semestre.compareTo(b.semestre);
+      // if (cmpSem != 0) return cmpSem;
+      return a.horarioNum.compareTo(b.horarioNum);
+    });
+
+    final List<Widget> cards =
+        horarios
+            .map(
+              (h) => EnsalamentoCard(
+                curso: h.curso,
+                semestre: h.semestre,
+                sala: h.sala,
+                horario: h.horario,
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Aulas de ${diasSemana[diaSelecionadoIndex]}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+            )
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 40,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: diasSemana.length,
+            itemBuilder: (context, index) {
+              final isSelected = index == diaSelecionadoIndex;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: ChoiceChip(
+                  label: Text(
+                    diasSemana[index],
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Colors.blue,
+                    ),
                   ),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() {
+                      diaSelecionadoIndex = index;
+                      aplicarFiltroDia();
+                    });
+                  },
+                  selectedColor: Colors.blueAccent,
+                  backgroundColor: Colors.white,
+                  elevation: isSelected ? 4 : 1,
+                  showCheckmark: false,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ensalamentosFiltrados.isEmpty
-                    ? Center(
-                        child: Text(
-                          mensagem ?? 'Nenhuma aula para este dia.',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: ensalamentosFiltrados.length,
-                        itemBuilder: (context, index) {
-                          final e = ensalamentosFiltrados[index];
-                          final List<Widget> cards = [];
-
-                          if (e.primeiroCurso?.id == cursoId) {
-                            cards.add(
-                              EnsalamentoCard(
-                                curso: e.primeiroCurso?.nomeDoCurso ?? 'Curso desconhecido',
-                                semestre: e.primeiroCurso?.semestre ?? 0,
-                                sala: e.sala?.nome ?? 'N/A',
-                                horario: '1º Horário',
-                              ),
-                            );
-                          }
-
-                          if (e.segundoCurso?.id == cursoId) {
-                            cards.add(
-                              EnsalamentoCard(
-                                curso: e.segundoCurso?.nomeDoCurso ?? 'Curso desconhecido',
-                                semestre: e.segundoCurso?.semestre ?? 0,
-                                sala: e.sala?.nome ?? 'N/A',
-                                horario: '2º Horário',
-                              ),
-                            );
-                          }
-
-                          return Column(children: cards);
-                        },
-                      ),
-              ),
-            ],
-          );
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Aulas de ${diasSemana[diaSelecionadoIndex]}',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child:
+              cards.isEmpty
+                  ? Center(
+                    child: Text(
+                      mensagem ?? 'Nenhuma aula para este dia.',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  )
+                  : ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: cards,
+                  ),
+        ),
+      ],
+    );
   }
+}
+
+// Classe auxiliar interna para ordenar corretamente os cards
+class _CardHorario {
+  final String curso;
+  final int semestre;
+  final String sala;
+  final String horario;
+  final int horarioNum; // 1 para 1º Horário, 2 para 2º Horário
+  _CardHorario({
+    required this.curso,
+    required this.semestre,
+    required this.sala,
+    required this.horario,
+    required this.horarioNum,
+  });
 }
 
 class EnsalamentoCard extends StatelessWidget {
@@ -253,7 +294,7 @@ class EnsalamentoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 4),
           ),
@@ -268,7 +309,7 @@ class EnsalamentoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$curso - ${semestre}º semestre',
+                  '$curso - $semestreº semestre',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
