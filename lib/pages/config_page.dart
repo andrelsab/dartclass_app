@@ -153,6 +153,7 @@ class _ConfigPageState extends State<ConfigPage> {
                         labelText: 'Curso',
                         border: OutlineInputBorder(),
                       ),
+                      dropdownColor: Colors.white,
                       value: cursoSelecionado,
                       items:
                           cursos
@@ -176,6 +177,7 @@ class _ConfigPageState extends State<ConfigPage> {
                         labelText: 'Semestre',
                         border: OutlineInputBorder(),
                       ),
+                      dropdownColor: Colors.white,
                       value: semestreSelecionado,
                       items:
                           semestres
@@ -199,6 +201,7 @@ class _ConfigPageState extends State<ConfigPage> {
                         labelText: 'Turno',
                         border: OutlineInputBorder(),
                       ),
+                      dropdownColor: Colors.white,
                       value: turnoSelecionado,
                       items:
                           turnos

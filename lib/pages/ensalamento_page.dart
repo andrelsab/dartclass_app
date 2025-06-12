@@ -169,6 +169,7 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
                           child: DropdownButton<String>(
                             value: diaSelecionado,
                             isExpanded: true,
+                            dropdownColor: Colors.white,
                             items:
                                 diasDaSemana.map((dia) {
                                   return DropdownMenuItem(
@@ -189,6 +190,7 @@ class _EnsalamentoPageState extends State<EnsalamentoPage> {
                             hint: const Text('Bloco'),
                             value: blocoSelecionado,
                             isExpanded: true,
+                            dropdownColor: Colors.white,
                             items:
                                 blocos.map((bloco) {
                                   return DropdownMenuItem<String>(

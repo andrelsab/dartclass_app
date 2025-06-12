@@ -93,10 +93,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _buildEnsalamentoPage(),
-      const EnsalamentoPage(), // ← Adicione sua página aqui
-    ];
+    final pages = [_buildEnsalamentoPage(), const EnsalamentoPage()];
 
     return Scaffold(
       backgroundColor: const Color(0xFFEFF3F8),
@@ -115,7 +112,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: pages[currentIndex],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SafeArea(child: pages[currentIndex]);
+        },
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) => setState(() => currentIndex = index),
@@ -123,7 +124,7 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         elevation: 12,
-        iconSize: 30,
+        iconSize: 28,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(
@@ -140,7 +141,6 @@ class _HomePageState extends State<HomePage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Cria uma lista temporária de todos os horários do usuário, com campo horarioNum
     final List<_CardHorario> horarios = [];
     for (final e in ensalamentosFiltrados) {
       if (e.primeiroCurso?.id == cursoId) {
@@ -167,13 +167,9 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // Ordena: nome da sala e horarioNum (1 antes de 2), semestre só se quiser separar turmas diferentes
     horarios.sort((a, b) {
       final cmpSala = a.sala.toLowerCase().compareTo(b.sala.toLowerCase());
       if (cmpSala != 0) return cmpSala;
-      // Se quiser manter o semestre como critério secundário, descomente a linha abaixo:
-      // final cmpSem = a.semestre.compareTo(b.semestre);
-      // if (cmpSem != 0) return cmpSem;
       return a.horarioNum.compareTo(b.horarioNum);
     });
 
@@ -189,67 +185,92 @@ class _HomePageState extends State<HomePage> {
             )
             .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 40,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: diasSemana.length,
-            itemBuilder: (context, index) {
-              final isSelected = index == diaSelecionadoIndex;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: ChoiceChip(
-                  label: Text(
-                    diasSemana[index],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : Colors.blue,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmall = constraints.maxWidth < 400;
+        final horizontalPadding = isSmall ? 8.0 : 16.0;
+        final titleFontSize = isSmall ? 18.0 : 22.0;
+        final cardSpacing = isSmall ? 6.0 : 10.0;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: isSmall ? 6 : 12),
+            SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: diasSemana.length,
+                itemBuilder: (context, index) {
+                  final isSelected = index == diaSelecionadoIndex;
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isSmall ? 2 : 6),
+                    child: ChoiceChip(
+                      label: Text(
+                        diasSemana[index],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : Colors.blue,
+                          fontSize: isSmall ? 13 : 15,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          diaSelecionadoIndex = index;
+                          aplicarFiltroDia();
+                        });
+                      },
+                      selectedColor: Colors.blueAccent,
+                      backgroundColor: Colors.white,
+                      elevation: isSelected ? 4 : 1,
+                      showCheckmark: false,
                     ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    setState(() {
-                      diaSelecionadoIndex = index;
-                      aplicarFiltroDia();
-                    });
-                  },
-                  selectedColor: Colors.blueAccent,
-                  backgroundColor: Colors.white,
-                  elevation: isSelected ? 4 : 1,
-                  showCheckmark: false,
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: isSmall ? 8 : 16),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Text(
+                'Aulas de ${diasSemana[diaSelecionadoIndex]}',
+                style: TextStyle(
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Aulas de ${diasSemana[diaSelecionadoIndex]}',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child:
-              cards.isEmpty
-                  ? Center(
-                    child: Text(
-                      mensagem ?? 'Nenhuma aula para este dia.',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  )
-                  : ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: cards,
-                  ),
-        ),
-      ],
+              ),
+            ),
+            SizedBox(height: isSmall ? 4 : 8),
+            Expanded(
+              child:
+                  cards.isEmpty
+                      ? Center(
+                        child: Text(
+                          mensagem ?? 'Nenhuma aula para este dia.',
+                          style: TextStyle(fontSize: isSmall ? 14 : 16),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                      : ListView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        children:
+                            cards
+                                .map(
+                                  (c) => Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: cardSpacing,
+                                    ),
+                                    child: c,
+                                  ),
+                                )
+                                .toList(),
+                      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
